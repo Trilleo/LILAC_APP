@@ -92,6 +92,12 @@ Add a new button to an existing bot message.
 #### /manage-buttons remove
 Usage: `/manage-buttons remove <message_id> <id_or_url>`  
 Remove a specific button from an existing bot message.
+#### /add-wordle-words
+Usage: `/add-wordle-words <words>`  
+Add multiple words to the Wordle dictionary at once.
+#### /fetch-words
+Usage: `/fetch-words <topic> <length> [limit]`  
+Get a list of themed words from the API to add to the dictionary.
 
 ### 3.3. Economy
 #### /balance
@@ -113,6 +119,9 @@ Open a form where you can submit suggestion. Only functional in specific channel
 #### /rps
 Usage: `/rps <member>`  
 Challenge a member to play rock paper scissors with you.
+#### /wordle
+Usage: `/wordle <length>`  
+Play a Wordle game.
 
 ### 3.6. Puzzle
 #### /cryptic-create
