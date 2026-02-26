@@ -23,8 +23,8 @@ function determineWinner(c1, c2) {
     return 'player2';
 }
 
-function buildGameEmbed(challenger, opponent, choices) {
-    const status = (userId) => choices[userId]
+function buildGameEmbed(challenger, opponent, playerChoices) {
+    const status = (userId) => playerChoices[userId]
         ? '🟢 *chosen*'
         : '🔴 *waiting...*';
 
