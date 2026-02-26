@@ -29,7 +29,7 @@ function buildGameEmbed(challenger, opponent, playerChoices) {
         : '🔴 *waiting...*';
 
     return new EmbedBuilder()
-        .setTitle('🪨📄✂️ Rock Paper Scissors')
+        .setTitle('Rock Paper Scissors')
         .setDescription(
             `**${challenger}** vs **${opponent}**\n\n` +
             `Both players must choose their move!\n\n` +
@@ -116,13 +116,11 @@ module.exports = {
             });
 
             collector.on('collect', async (i) => {
-                // Spectators cannot interact
                 if (i.user.id !== challenger.id && i.user.id !== opponent.id) {
                     await i.reply({ content: 'You are spectating this game. Only the two players can make choices!', ephemeral: true });
                     return;
                 }
 
-                // Ignore if this player already chose
                 if (playerChoices[i.user.id]) {
                     await i.reply({ content: 'You have already made your choice!', ephemeral: true });
                     return;
@@ -136,13 +134,11 @@ module.exports = {
                     ephemeral: true,
                 });
 
-                // Update the embed to reflect who has chosen (without revealing the pick)
                 await mainMessage.edit({
                     embeds: [buildGameEmbed(challenger, opponent, playerChoices)],
                     components: [choiceRow],
                 });
 
-                // Both players have chosen — reveal results
                 if (playerChoices[challenger.id] && playerChoices[opponent.id]) {
                     collector.stop('both_chose');
                 }
@@ -158,20 +154,20 @@ module.exports = {
 
                     let resultText;
                     if (result === 'tie') {
-                        resultText = `🤝 It's a **tie**! Both chose ${CHOICES[c1].emoji} **${CHOICES[c1].label}**.`;
+                        resultText = `It's a **tie**! Both chose ${CHOICES[c1].emoji} **${CHOICES[c1].label}**.`;
                     } else {
                         const winner = result === 'player1' ? challenger : opponent;
                         const loser  = result === 'player1' ? opponent  : challenger;
                         const wc     = result === 'player1' ? c1 : c2;
                         const lc     = result === 'player1' ? c2 : c1;
                         resultText =
-                            `🏆 **${winner}** wins!\n` +
+                            `**${winner}** wins!\n` +
                             `${winner} chose ${CHOICES[wc].emoji} **${CHOICES[wc].label}** ` +
                             `vs ${loser}'s ${CHOICES[lc].emoji} **${CHOICES[lc].label}**.`;
                     }
 
                     const resultEmbed = new EmbedBuilder()
-                        .setTitle('🪨📄✂️ Rock Paper Scissors — Result')
+                        .setTitle('Rock Paper Scissors — Result')
                         .setDescription(
                             `**${challenger}** vs **${opponent}**\n\n` +
                             `${challenger}: ${CHOICES[c1].emoji} **${CHOICES[c1].label}**\n` +
@@ -183,14 +179,13 @@ module.exports = {
                     await mainMessage.edit({ embeds: [resultEmbed], components: [disabledRow] });
                     await thread.setName(threadName('[Finished] ', challenger.username, opponent.username)).catch(() => {});
                 } else {
-                    // Timeout
                     const missing = [challenger, opponent]
                         .filter((p) => !playerChoices[p.id])
                         .map((p) => `${p}`)
                         .join(', ');
 
                     const timeoutEmbed = new EmbedBuilder()
-                        .setTitle('🪨📄✂️ Rock Paper Scissors — Timed Out')
+                        .setTitle('Rock Paper Scissors — Timed Out')
                         .setDescription(
                             `**${challenger}** vs **${opponent}**\n\n` +
                             `The game timed out. ${missing} did not choose in time.`
