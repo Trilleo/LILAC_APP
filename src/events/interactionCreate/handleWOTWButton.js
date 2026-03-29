@@ -47,14 +47,15 @@ module.exports = async (client, interaction) => {
                 return modalInteraction.editReply("No ongoing game!");
             }
 
+            const cooldownMs = wordOfTheWeek.cooldownMs || 3 * 60 * 60 * 1000;
+
             if (wordOfTheWeekUser) {
                 const lastDailyDate = wordOfTheWeekUser.lastGuessDate;
                 const currentDate = new Date();
                 const timeDiff = currentDate - lastDailyDate;
-                const threeHours = 3 * 60 * 60 * 1000;
 
-                if (timeDiff < threeHours) {
-                    const remainingTime = threeHours - timeDiff;
+                if (timeDiff < cooldownMs) {
+                    const remainingTime = cooldownMs - timeDiff;
                     const remainingHours = Math.floor(remainingTime / (60 * 60 * 1000));
                     const remainingMinutes = Math.floor((remainingTime % (60 * 60 * 1000)) / (60 * 1000));
 
@@ -70,8 +71,11 @@ module.exports = async (client, interaction) => {
 
             await wordOfTheWeekUser.save();
 
-            const wotwOriginalWord = wordOfTheWeek.word.toLowerCase();
-            const isCorrect = wotwOriginalWord === wotwTextLower;
+            const guessedWordEntries = wordOfTheWeek.guessedWords || [];
+            const guessedWordSet = new Set(guessedWordEntries.map(g => g.word.toLowerCase()));
+            const remainingWords = wordOfTheWeek.words.filter(w => !guessedWordSet.has(w.toLowerCase()));
+            const matchedWord = remainingWords.find(w => w.toLowerCase() === wotwTextLower);
+            const isCorrect = !!matchedWord;
 
             const logChannel = client.channels.cache.get(logChannelId);
             if (logChannel) {
@@ -90,24 +94,50 @@ module.exports = async (client, interaction) => {
             }
 
             if (isCorrect) {
-                await modalInteraction.editReply("**Your answer is correct!** Congratulations on winning this Word of the Week event!");
+                wordOfTheWeek.guessedWords.push({ word: matchedWord, winnerId: interaction.member.id });
 
-                wordOfTheWeek.isLive = false;
-                wordOfTheWeek.winnerId = interaction.member.id;
+                const newGuessedCount = wordOfTheWeek.guessedWords.length;
+                const totalWords = wordOfTheWeek.words.length;
+                const allGuessed = newGuessedCount >= totalWords;
+
+                if (allGuessed) {
+                    wordOfTheWeek.isLive = false;
+                }
+
                 await wordOfTheWeek.save();
 
-                const messageChannel = await client.channels.cache.get(publicChannelId);
-                if (messageChannel) {
-                    const winEmbed = new EmbedBuilder()
-                        .setTitle("Word of the Week Ended")
-                        .setDescription("Someone has found the right answer! The event review will come out soon...")
-                        .setColor('#FFD700')
-                        .addFields(
-                            { name: "Game ID", value: `${wordOfTheWeek.gameId}`, inline: true },
-                            { name: "Winner", value: `${interaction.member}`, inline: true }
-                        );
+                const messageChannel = client.channels.cache.get(publicChannelId);
 
-                    await messageChannel.send({ embeds: [winEmbed] });
+                if (allGuessed) {
+                    await modalInteraction.editReply("**Your answer is correct!** Congratulations! All words have been found — the game is now over!");
+
+                    if (messageChannel) {
+                        const winEmbed = new EmbedBuilder()
+                            .setTitle("Word of the Week Ended")
+                            .setDescription("All answers have been found! The event review will come out soon...")
+                            .setColor('#FFD700')
+                            .addFields(
+                                { name: "Game ID", value: `${wordOfTheWeek.gameId}`, inline: true },
+                                { name: "Final Winner", value: `${interaction.member}`, inline: true }
+                            );
+
+                        await messageChannel.send({ embeds: [winEmbed] });
+                    }
+                } else {
+                    await modalInteraction.editReply(`**Your answer is correct!** Congratulations! But the game isn't over yet — **${totalWords - newGuessedCount}** word(s) still remain!`);
+
+                    if (messageChannel) {
+                        const winEmbed = new EmbedBuilder()
+                            .setTitle("WOTW — Word Found!")
+                            .setDescription(`Someone found one of the answers! **${totalWords - newGuessedCount}** word(s) still remain.`)
+                            .setColor('#00FF00')
+                            .addFields(
+                                { name: "Game ID", value: `${wordOfTheWeek.gameId}`, inline: true },
+                                { name: "Winner", value: `${interaction.member}`, inline: true }
+                            );
+
+                        await messageChannel.send({ embeds: [winEmbed] });
+                    }
                 }
 
             } else {

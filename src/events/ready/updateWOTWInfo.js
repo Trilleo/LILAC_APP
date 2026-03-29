@@ -32,9 +32,17 @@ module.exports = async (client) => {
             }
         }else {
 
+            const cooldownMs = wordOfTheWeek.cooldownMs || 3 * 60 * 60 * 1000;
+            const cooldownHours = Math.floor(cooldownMs / (60 * 60 * 1000));
+            const cooldownMinutes = Math.floor((cooldownMs % (60 * 60 * 1000)) / (60 * 1000));
+            const cooldownDisplay = `${cooldownHours > 0 ? cooldownHours + 'h ' : ''}${cooldownMinutes > 0 ? cooldownMinutes + 'm' : ''}`.trim() || '0m';
+
+            const totalWords = wordOfTheWeek.words.length;
+            const guessedCount = (wordOfTheWeek.guessedWords || []).length;
+
             messageEmbed = {
                 title: "Submit your WOTW guess",
-                description: "You can submit your guesses using the button below. You can only submit a guess every **three hours**.",
+                description: `You can submit your guesses using the button below. You can only submit a guess every **${cooldownDisplay}**.`,
                 fields: [
                     {
                         name: "Game ID",
@@ -43,6 +51,10 @@ module.exports = async (client) => {
                     {
                         name: "Host",
                         value: `<@${wordOfTheWeek.hostId}>`,
+                    },
+                    {
+                        name: "Progress",
+                        value: `${guessedCount}/${totalWords} word(s) found`,
                     }
                 ],
                 footer: {
