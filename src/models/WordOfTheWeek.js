@@ -14,13 +14,18 @@ const WOTWSchema = new Schema({
         type: Boolean,
         default: true,
     },
-    word: {
-        type: String,
+    words: {
+        type: [String],
         required: true,
     },
-    winnerId: {
-        type: String,
-    }
+    guessedWords: [{
+        word: { type: String, required: true },
+        winnerId: { type: String, required: true },
+    }],
+    cooldownMs: {
+        type: Number,
+        default: 3 * 60 * 60 * 1000,
+    },
 })
 
 module.exports = model("WOTW", WOTWSchema);
